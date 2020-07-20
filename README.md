@@ -1,2 +1,3 @@
-# big_data_bike_sharing
+# Bike sharing - Spark application
+
 Spark application for bike share data analysis.
