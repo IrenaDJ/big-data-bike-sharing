@@ -1,0 +1,9 @@
+*** LOCAL COMMANDS ***
+
+spark-submit main.py "hdfs://localhost:9000/Data/D.C/New/weather.csv" hdfs://localhost:9000/Data/D.C/New/stations.csv hdfs://localhost:9000/Data/D.C/New/bikedata/*-capitalbikeshare-tripdata/*-capitalbikeshare-tripdata.csv
+
+spark-submit main.py --startdate "04/01/2019" --enddate "09/30/2019" "hdfs://localhost:9000/Data/D.C/New/weather.csv" hdfs://localhost:9000/Data/D.C/New/stations.csv hdfs://localhost:9000/Data/D.C/New/bikedata/*-capitalbikeshare-tripdata/*-capitalbikeshare-tripdata.csv
+
+
+*** DOCKER COMMANDS ***
+
