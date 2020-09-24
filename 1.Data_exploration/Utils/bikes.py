@@ -39,6 +39,8 @@ def process_bikes(bikes_raw):
     bike_data = bike_data.withColumn('start_station_id', F.when(bike_data['start_station_id'].isin('31008', '32031'), None).otherwise(bike_data['start_station_id']))
     bike_data = bike_data.withColumn('end_station_id', F.when(bike_data['end_station_id'].isin('31008', '32031'), None).otherwise(bike_data['end_station_id']))
     bike_data = bike_data.dropna(subset=['start_station_id', 'end_station_id'])
+    #some weird date problem for 31.03.2019...
+    bike_data = bike_data.dropna()
     
     return bike_data
 
@@ -57,10 +59,19 @@ def process_stations(stations_raw, spark):
 
     return stations
 
-def filter_bikes(bikes, start_date, end_date):
+
+def filter_stations(stations, min_lat, min_long, max_lat, max_long):
+    data_filtered = stations.where((stations.lat > min_lat) & (stations.lat < max_lat) & (stations.long > min_long) & (stations.long < max_long))
+    stations_list = data_filtered.select('terminalName').toPandas()
+    stations_set = set(stations_list['terminalName'])
+    return stations_set
+
+
+def filter_bikes(bikes, start_date, end_date, allowed_stations):
     dates = (start_date,  end_date)
     date_from, date_to = [F.to_timestamp(F.lit(s), "MM/dd/yyyy") for s in dates]
     bikes_filtered = bikes.where((bikes.start_date > date_from) & (bikes.start_date < date_to))
+    bikes_filtered = bikes_filtered.where((bikes_filtered.end_station_id.isin(allowed_stations)) & (bikes_filtered.start_station_id.isin(allowed_stations)))
     return bikes_filtered
 
 
