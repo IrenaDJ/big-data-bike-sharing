@@ -1,0 +1,25 @@
+*** PREPARE DATASET ***
+
+spark-submit --master spark://localhost:7077 prepare_dataset.py "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/ml_dataset_extended2.parquet" "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/train.parquet" "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/test.parquet"
+
+
+*** TRAIN ***
+
+spark-submit --master spark://localhost:7077 train.py "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/train.parquet" "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/model"
+
+*** PREDICT ***
+
+spark-submit --master spark://localhost:7077 predict.py "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/test.parquet" "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/model"
+
+*** KAFKA PRODUCER ***
+
+python ml_producer.py "/home/aleksandra.stojnev/apps/irena.djordjevic/BigData/Data/WDC/test_extended2.parquet" localhost:9092 ml
+
+
+*** KAFKA CONSUMER ***
+
+spark-submit --master spark://localhost:7077 --jars spark-streaming-kafka-0-8-assembly_2.11-2.4.5.jar ml_consumer.py localhost:9092 ml "hdfs://192.168.42.160:9000/apps/irena.djordjevic/data/WDC/model" 10
+
+
+
+
