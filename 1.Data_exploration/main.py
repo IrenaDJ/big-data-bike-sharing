@@ -7,7 +7,8 @@ from Utils.weather import *
 from Utils.bikes import *
 from Utils.aggregation import *
 
-def main(weather_data_folder, stations_data_folder, bikes_data_folder, joined_data_folder, start_date, end_date, min_lat, min_long, max_lat, max_long):
+def main(weather_data_folder, stations_data_folder, bikes_data_folder, joined_data_folder, start_date, end_date, 
+    min_lat, min_long, max_lat, max_long):
 
     #Starting session
     spark = SparkSession.builder.appName('BigData1').getOrCreate()
@@ -27,7 +28,8 @@ def main(weather_data_folder, stations_data_folder, bikes_data_folder, joined_da
 
     bikes = process_bikes(bikes_raw)
     bikes = filter_bikes(bikes, start_date, end_date, allowed_stations)
-    #bikes_summary(bikes, stations)
+    bikes = merge_bikes_and_stations(bikes, stations)
+    bikes_summary(bikes, stations)
 
     #Getting aggregated data - for starters
 
@@ -65,5 +67,6 @@ if __name__ == "__main__":
                         help='maximum longitude')
 
     args = parser.parse_args()
-    main(args.weather_data_folder, args.stations_data_folder, args.bikes_data_folder, args.joined_data_folder, args.startdate, args.enddate, 
+    main(args.weather_data_folder, args.stations_data_folder, args.bikes_data_folder, args.joined_data_folder, 
+    args.startdate, args.enddate, 
     args.minlat, args.minlong, args.maxlat, args.maxlong)

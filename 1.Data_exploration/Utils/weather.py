@@ -23,15 +23,24 @@ def process_weather(weather_raw):
     #From Farenheit to Celsius
     weather = weather.withColumn('air_temp', (weather.air_temp - 32) * 5.0/9.0)
 
-    weather = weather.withColumn('weather_class', F.when(weather.weather_summary.rlike('(clear|scattered|sunny|obscured)'), 'clear').otherwise(weather.weather_summary))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_summary.rlike('(broken|overcast|cloudy)'), 'cloudy').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_summary.rlike('(light (drizzle|rain))|rain|drizzle'), 'light rain').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_summary.rlike('(heavy (drizzle|rain))|heavy_rain'), 'heavy rain').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_class.rlike('snow'), 'snowy').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_class.rlike('ice'), 'icy').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_class.rlike('thunder|squalls'), 'stormy').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_class.rlike('haze|mist|fog'), 'foggy').otherwise(weather.weather_class))
-    weather = weather.withColumn('weather_class', F.when(weather.weather_summary.isNull(), 'clear').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_summary.rlike('(clear|scattered|sunny|obscured)'), 'clear').otherwise(weather.weather_summary))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_summary.rlike('(broken|overcast|cloudy)'), 'cloudy').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_summary.rlike('(light (drizzle|rain))|rain|drizzle'), 'light rain').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_summary.rlike('(heavy (drizzle|rain))|heavy_rain'), 'heavy rain').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_class.rlike('snow'), 'snowy').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_class.rlike('ice'), 'icy').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_class.rlike('thunder|squalls'), 'stormy').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_class.rlike('haze|mist|fog'), 'foggy').otherwise(weather.weather_class))
+    weather = weather.withColumn('weather_class', \
+        F.when(weather.weather_summary.isNull(), 'clear').otherwise(weather.weather_class))
 
     return weather
 

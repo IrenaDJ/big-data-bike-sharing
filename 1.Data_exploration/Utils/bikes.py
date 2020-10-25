@@ -32,12 +32,17 @@ def process_bikes(bikes_raw):
     bike_data = bike_data.withColumn('bike_number', bike_data['Bike number'])
     bike_data = bike_data.withColumn('member_type', bike_data['Member type'])
 
-    bike_data = bike_data.select('duration', 'start_date', 'end_date', 'start_station_id', 'start_station_name', 'end_station_id', 'end_station_name', 'bike_number', 'member_type')
+    bike_data = bike_data.select('duration', 'start_date', 'end_date', 'start_station_id', 'start_station_name', \
+        'end_station_id', 'end_station_name', 'bike_number', 'member_type')
 
-    bike_data = bike_data.withColumn('start_station_id', F.when(bike_data['start_station_id'].like('00000'), '31127').otherwise(bike_data['start_station_id']))
-    bike_data = bike_data.withColumn('end_station_id', F.when(bike_data['end_station_id'].like('00000'), '31127').otherwise(bike_data['end_station_id']))
-    bike_data = bike_data.withColumn('start_station_id', F.when(bike_data['start_station_id'].isin('31008', '32031'), None).otherwise(bike_data['start_station_id']))
-    bike_data = bike_data.withColumn('end_station_id', F.when(bike_data['end_station_id'].isin('31008', '32031'), None).otherwise(bike_data['end_station_id']))
+    bike_data = bike_data.withColumn('start_station_id', F.when(bike_data['start_station_id'].like('00000'), '31127') \
+        .otherwise(bike_data['start_station_id']))
+    bike_data = bike_data.withColumn('end_station_id', F.when(bike_data['end_station_id'].like('00000'), '31127') \
+        .otherwise(bike_data['end_station_id']))
+    bike_data = bike_data.withColumn('start_station_id', F.when(bike_data['start_station_id'] \
+        .isin('31008', '32031'), None).otherwise(bike_data['start_station_id']))
+    bike_data = bike_data.withColumn('end_station_id', F.when(bike_data['end_station_id']. \
+        isin('31008', '32031'), None).otherwise(bike_data['end_station_id']))
     bike_data = bike_data.dropna(subset=['start_station_id', 'end_station_id'])
     #some weird date problem for 31.03.2019...
     bike_data = bike_data.dropna()
@@ -54,14 +59,33 @@ def process_stations(stations_raw, spark):
     stations = stations.withColumn('nbEmptyDocks', stations.nbEmptyDocks.cast(IntegerType()))
 
     station_columns = ['id', 'name', 'terminalName', 'lat', 'long', 'nbBikes', 'nbEmptyDocks']
-    new_station = spark.createDataFrame([(597, 'Mount Vernon Ave & E Del Ray Ave', '31086', 38.826213, -77.058640, 5, 10)], station_columns)
+    new_station = spark.createDataFrame([(597, 'Mount Vernon Ave & E Del Ray Ave', '31086', \
+        38.826213, -77.058640, 5, 10)], station_columns)
     stations = stations.union(new_station)
 
     return stations
 
+def merge_bikes_and_stations(bikes, stations):
+    udf_get_distance = F.udf(get_distance)
+    stations_partial = stations.select('terminalName', 'lat', 'long')
+
+    bikes_joined = bikes.join(stations_partial.withColumnRenamed('lat','lat_start') \
+        .withColumnRenamed('long','long_start'), bikes.start_station_id == stations.terminalName)
+    bikes_joined = bikes_joined.drop('terminalName')
+    bikes_joined = bikes_joined.join(stations_partial.withColumnRenamed('lat','lat_end') \
+        .withColumnRenamed('long','long_end'), bikes_joined.end_station_id == stations.terminalName)
+    bikes_joined = bikes_joined.drop('terminalName')
+
+    bikes = bikes_joined.withColumn("abs_distance", udf_get_distance(
+        bikes_joined.long_start, bikes_joined.lat_start,
+        bikes_joined.long_end, bikes_joined.lat_end))
+
+    return bikes
+
 
 def filter_stations(stations, min_lat, min_long, max_lat, max_long):
-    data_filtered = stations.where((stations.lat > min_lat) & (stations.lat < max_lat) & (stations.long > min_long) & (stations.long < max_long))
+    data_filtered = stations.where((stations.lat > min_lat) & (stations.lat < max_lat) & \
+        (stations.long > min_long) & (stations.long < max_long))
     stations_list = data_filtered.select('terminalName').toPandas()
     stations_set = set(stations_list['terminalName'])
     return stations_set
@@ -71,7 +95,8 @@ def filter_bikes(bikes, start_date, end_date, allowed_stations):
     dates = (start_date,  end_date)
     date_from, date_to = [F.to_timestamp(F.lit(s), "MM/dd/yyyy") for s in dates]
     bikes_filtered = bikes.where((bikes.start_date > date_from) & (bikes.start_date < date_to))
-    bikes_filtered = bikes_filtered.where((bikes_filtered.end_station_id.isin(allowed_stations)) & (bikes_filtered.start_station_id.isin(allowed_stations)))
+    bikes_filtered = bikes_filtered.where((bikes_filtered.end_station_id.isin(allowed_stations)) & \
+        (bikes_filtered.start_station_id.isin(allowed_stations)))
     return bikes_filtered
 
 
@@ -90,17 +115,6 @@ def bikes_summary(bikes, stations):
     check_out_summary.show()
 
     #print statistics for distance
-    udf_get_distance = F.udf(get_distance)
-    stations_partial = stations.select('terminalName', 'lat', 'long')
-
-    bikes_joined = bikes.join(stations_partial.withColumnRenamed('lat','lat_start').withColumnRenamed('long','long_start'), bikes.start_station_id == stations.terminalName)
-    bikes_joined = bikes_joined.drop('terminalName')
-    bikes_joined = bikes_joined.join(stations_partial.withColumnRenamed('lat','lat_end').withColumnRenamed('long','long_end'), bikes_joined.end_station_id == stations.terminalName)
-    bikes_joined = bikes_joined.drop('terminalName')
-
-    bikes = bikes_joined.withColumn("abs_distance", udf_get_distance(
-        bikes_joined.long_start, bikes_joined.lat_start,
-        bikes_joined.long_end, bikes_joined.lat_end))
-
-    distance_summary = bikes.select([F.min("abs_distance"), F.max("abs_distance"), F.mean("abs_distance"), F.stddev("abs_distance")])
+    distance_summary = bikes.select([F.min("abs_distance"), F.max("abs_distance"), F.mean("abs_distance"), \
+        F.stddev("abs_distance")])
     distance_summary.show()
