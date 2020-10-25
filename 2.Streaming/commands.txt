@@ -1,0 +1,13 @@
+***PRODUCER***
+python kafka_producer.py "/home/aleksandra.stojnev/apps/irena.djordjevic/BigData/Data/WDC/weather.csv" localhost:9092 proba
+
+python kafka_producer.py "/home/aleksandra.stojnev/apps/irena.djordjevic/BigData/Data/WDC/joined_extended.parquet" localhost:9092 proba
+
+
+***CONSUMER***
+
+###spark-submit kafka_consumer.py bootstrap_server topic_name time_interval
+
+spark-submit --master spark://localhost:7077 --jars spark-streaming-kafka-0-8-assembly_2.11-2.4.5.jar kafka_consumer.py localhost:9092 proba 5
+
+spark-submit --master spark://localhost:7077 --jars spark-streaming-kafka-0-8-assembly_2.11-2.4.5.jar kafka_consumer.py localhost:9092 proba 10 10
