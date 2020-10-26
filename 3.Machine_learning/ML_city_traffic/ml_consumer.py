@@ -50,7 +50,8 @@ def predict(spark, input_data, model_path):
         df = df.withColumn(column, df[column].cast(DoubleType()))
 
     features =\
-        VectorAssembler(inputCols=["hour", 'dayofyear', 'month', 'air_temp', 'wind_speed', 'visibility', 'weather_class'], outputCol="features")
+        VectorAssembler(inputCols=["hour", 'dayofyear', 'month', 'air_temp', 'wind_speed', 'visibility', 'weather_class'],
+         outputCol="features")
     test_data = features.transform(df)
 
     model = PipelineModel.load(model_path)

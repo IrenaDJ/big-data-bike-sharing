@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import *
 
-from pyspark.ml.feature import VectorIndexer, VectorAssembler, StringIndexer
+from pyspark.ml.feature import VectorIndexer, VectorAssembler, StringIndexer, OneHotEncoderModel
 from pyspark.ml import Pipeline
 from pyspark.ml.regression import GBTRegressor
 from pyspark.ml.feature import VectorAssembler
@@ -22,11 +22,13 @@ def main(data_path, train_data_path, test_data_path, stations_path, weather_path
     data = data.drop("count")
 
     stringIndexer = StringIndexer(inputCol="station", outputCol="station_index")
-    data = stringIndexer.fit(data).transform(data)
-    stringIndexer.write().overwrite().save(stations_path)
+    model_st = stringIndexer.fit(data)
+    data = model_st.transform(data)
+    model_st.write().overwrite().save(stations_path)
     stringIndexer_weather = StringIndexer(inputCol="weather_class", outputCol="weather_index")
-    data = stringIndexer_weather.fit(data).transform(data)
-    stringIndexer_weather.write().overwrite().save(weather_path)
+    model_we = stringIndexer_weather.fit(data)
+    data = model_we.transform(data)
+    model_we.write().overwrite().save(weather_path)
 
     # Split the data into training and test sets (30% held out for testing)
     (trainingData, testData) = data.randomSplit([0.7, 0.3])

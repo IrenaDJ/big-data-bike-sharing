@@ -26,10 +26,10 @@ def main(train_data_folder, model_path):
     # Train a GBT model.
     gbt = GBTRegressor(featuresCol="features", maxIter=10)
 
-    # Chain indexer and GBT in a Pipeline
+    # GBT in a Pipeline
     pipeline = Pipeline(stages=[gbt])
 
-    # Train model.  This also runs the indexer.
+    # Train model. 
     model = pipeline.fit(train_data)
     model.write().overwrite().save(model_path)
 
